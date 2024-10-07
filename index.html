@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-it Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .buttons {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+        }
+
+        .buttons button {
+            margin: 5px;
+        }
+
+        .post-it {
+            width: 200px;
+            height: auto;
+            background-color: #fffb8f;
+            padding: 10px;
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+            resize: both;
+            overflow: hidden;
+        }
+
+        .post-it .header {
+            cursor: move;
+            font-weight: bold;
+            background-color: #fff6a5;
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+            user-select: none;
+        }
+
+        .post-it textarea {
+            width: 100%;
+            height: 120px;
+            border: none;
+            outline: none;
+            background: transparent;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .resize-handle {
+            width: 10px;
+            height: 10px;
+            background-color: #ddd;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            cursor: nwse-resize;
+        }
+    </style>
+</head>
+<body>
+    <div class="buttons">
+        <button id="newPostIt">New</button>
+        <button id="copyPostIt">Copy</button>
+        <button id="deletePostIt">Delete</button>
+    </div>
+    <div id="postItContainer"></div>
+
+    <script>
+        const container = document.getElementById('postItContainer');
+        let selectedPostIt = null;
+
+        // Create New Post-it
+        document.getElementById('newPostIt').addEventListener('click', function() {
+            createPostIt();
+        });
+
+        // Copy Selected Post-it
+        document.getElementById('copyPostIt').addEventListener('click', function() {
+            if (selectedPostIt) {
+                const clone = selectedPostIt.cloneNode(true);
+                container.appendChild(clone);
+                attachPostItEvents(clone);
+                clone.style.left = (parseInt(clone.style.left) + 20) + 'px';
+                clone.style.top = (parseInt(clone.style.top) + 20) + 'px';
+                selectedPostIt = clone;
+            }
+        });
+
+        // Delete Selected Post-it
+        document.getElementById('deletePostIt').addEventListener('click', function() {
+            if (selectedPostIt) {
+                selectedPostIt.remove();
+                selectedPostIt = null;
+            }
+        });
+
+        function createPostIt() {
+            const postIt = document.createElement('div');
+            postIt.className = 'post-it';
+
+            const header = document.createElement('div');
+            header.className = 'header';
+            header.innerText = 'New Post-it';
+
+            const textarea = document.createElement('textarea');
+            textarea.rows = 7;
+
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'resize-handle';
+
+            postIt.appendChild(header);
+            postIt.appendChild(textarea);
+            postIt.appendChild(resizeHandle);
+            container.appendChild(postIt);
+
+            attachPostItEvents(postIt);
+            selectedPostIt = postIt;
+        }
+
+        function attachPostItEvents(postIt) {
+            const header = postIt.querySelector('.header');
+            const textarea = postIt.querySelector('textarea');
+            const resizeHandle = postIt.querySelector('.resize-handle');
+
+            // Select the post-it when clicked
+            postIt.addEventListener('click', function () {
+                selectedPostIt = postIt;
+            });
+
+            // Move the post-it by dragging the header
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            header.addEventListener('mousedown', function (e) {
+                isDragging = true;
+                offsetX = e.clientX - postIt.offsetLeft;
+                offsetY = e.clientY - postIt.offsetTop;
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (isDragging) {
+                    postIt.style.left = (e.clientX - offsetX) + 'px';
+                    postIt.style.top = (e.clientY - offsetY) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', function () {
+                isDragging = false;
+            });
+
+            // Resize the post-it
+            resizeHandle.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+            });
+
+            function resize(e) {
+                postIt.style.width = (e.clientX - postIt.offsetLeft) + 'px';
+                postIt.style.height = (e.clientY - postIt.offsetTop) + 'px';
+            }
+
+            function stopResize() {
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+
+            // Update header with the first 25 characters of the first line
+            textarea.addEventListener('input', function () {
+                const firstLine = textarea.value.split('\n')[0];
+                header.innerText = firstLine.substring(0, 25);
+            });
+        }
+
+        // Create an initial post-it on load
+        createPostIt();
+    </script>
+</body>
+</html>
